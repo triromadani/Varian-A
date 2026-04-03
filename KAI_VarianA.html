@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAI Access – Pesan Tiket (Varian A)</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px}
+  .phone-wrap{width:100%;max-width:400px;margin:0 auto}
+  .screen{display:none;flex-direction:column;min-height:100vh;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+  .screen.active{display:flex}
+
+  /* HEADER GRADIENT */
+  .header-grad{background:linear-gradient(135deg,#6a3de8,#c43b8e,#e8763a);padding:16px;color:#fff;position:relative}
+  .header-grad .back{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px 4px 0}
+  .header-grad h1{font-size:17px;font-weight:700;text-align:center;flex:1}
+  .header-row{display:flex;align-items:center}
+  .timer-badge{background:rgba(80,30,160,.7);color:#fff;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* STEP INDICATOR */
+  .steps{display:flex;align-items:center;padding:0 16px 14px;background:linear-gradient(135deg,#6a3de8,#c43b8e,#e8763a);overflow-x:auto;white-space:nowrap;gap:4px}
+  .step{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,.6);flex-shrink:0}
+  .step.active .step-num{background:#fff;color:#6a3de8;font-weight:700}
+  .step.done .step-num{background:#22c55e;color:#fff}
+  .step-num{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+  .step-line{width:28px;height:1px;background:rgba(255,255,255,.3);flex-shrink:0}
+  .step.active span,.step.done span{color:#fff}
+
+  /* BODY */
+  .body{flex:1;padding:16px;background:#f5f6fa;overflow-y:auto}
+  .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+  /* PAGE 1 — FORM */
+  .field-group{display:flex;flex-direction:column;gap:0}
+  .field{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #f0f0f0;cursor:pointer}
+  .field:last-child{border-bottom:none}
+  .field-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+  .field-label{font-size:11px;color:#999;margin-bottom:2px}
+  .field-value{font-size:15px;font-weight:600;color:#111}
+  .field-value.placeholder{color:#bbb;font-weight:400}
+  .swap-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;margin-left:auto}
+  .field-row{display:flex;align-items:center}
+  .toggle-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .toggle-label{font-size:12px;color:#888}
+  .toggle{width:42px;height:24px;background:#ddd;border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
+  .toggle.on{background:#2563eb}
+  .toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .toggle.on::after{left:20px}
+
+  .btn-primary{width:100%;padding:16px;background:#2563eb;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;letter-spacing:.3px;transition:opacity .15s}
+  .btn-primary:hover{opacity:.9}
+
+  .banner-ad{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:14px;padding:16px;color:#fff;display:flex;align-items:center;gap:12px;margin-top:4px;position:relative}
+  .ad-tag{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+  .banner-ad .ad-icon{font-size:32px}
+  .banner-ad h4{font-size:13px;font-weight:700;margin-bottom:2px}
+  .banner-ad p{font-size:11px;opacity:.85}
+
+  /* PAGE 2 — HASIL */
+  .route-header{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee}
+  .route-title{font-size:13px;font-weight:700;text-align:center;flex:1}
+  .route-sub{font-size:11px;color:#888;text-align:center}
+  .date-tabs{display:flex;overflow-x:auto;background:#fff;border-bottom:1px solid #eee;padding:0 8px}
+  .date-tab{padding:12px 16px;font-size:13px;color:#888;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;font-weight:500}
+  .date-tab.active{color:#2563eb;border-color:#2563eb;font-weight:700}
+  .class-tabs{display:flex;gap:8px;padding:12px 16px;background:#fff;overflow-x:auto}
+  .class-tab{padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap;border:1.5px solid #e5e7eb;font-weight:500;color:#555;flex-shrink:0;background:#fff}
+  .class-tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+  .section-title{font-size:15px;font-weight:700;padding:16px 16px 8px;background:#f5f6fa}
+  .train-card{background:#fff;border-radius:14px;margin:0 16px 12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .train-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .kelas-badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700}
+  .kelas-ekonomi{background:#fce7f3;color:#be185d}
+  .kelas-eksekutif{background:#ede9fe;color:#6d28d9}
+  .kelas-bisnis{background:#dbeafe;color:#1d4ed8}
+  .avail-badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+  .avail-sisa{background:#fff1f2;color:#e11d48;border:1px solid #fecdd3}
+  .avail-ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+  .train-name{font-size:15px;font-weight:700;color:#111;margin-bottom:8px}
+  .train-time{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .time-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .time-dot.empty{border:2px solid #9ca3af;background:#fff}
+  .time-dot.filled{background:#2563eb}
+  .time-line{width:1px;height:18px;background:#d1d5db;margin-left:3px}
+  .time-col{display:flex;flex-direction:column;gap:2px}
+  .time-val{font-size:15px;font-weight:700;color:#111}
+  .time-station{font-size:12px;color:#6b7280}
+  .duration{font-size:11px;color:#9ca3af;margin-left:4px}
+  .price-col{text-align:right}
+  .price-label{font-size:11px;color:#9ca3af}
+  .price-val{font-size:15px;font-weight:700;color:#111}
+  .price-unit{font-size:11px;color:#9ca3af}
+  .train-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f3f4f6;padding-top:12px;margin-top:4px}
+  .subkelas-btn{font-size:13px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
+  .detail-btn{border:1.5px solid #2563eb;color:#2563eb;background:#fff;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .bottom-bar{background:#fff;border-top:1px solid #eee;padding:12px 16px;display:flex;gap:12px;align-items:center}
+  .sort-btn,.filter-btn{flex:1;border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+  .jadwal-habis{background:#eff6ff;padding:12px 16px;font-size:13px;color:#2563eb;display:flex;align-items:center;justify-content:space-between}
+
+  /* PAGE 3 — DATA PENUMPANG */
+  .step-header{background:#fff;padding:12px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px}
+  .step-header h2{font-size:16px;font-weight:700}
+  .step-badge{width:26px;height:26px;background:#2563eb;color:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .info-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .info-row{margin-bottom:12px}
+  .info-row:last-child{margin-bottom:0}
+  .info-label{font-size:12px;color:#9ca3af;margin-bottom:2px}
+  .info-val{font-size:15px;font-weight:600;color:#111}
+  .info-val.email{font-size:13px}
+  .tambah-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid #f3f4f6;margin-top:4px}
+  .tambah-label{font-size:14px;color:#374151}
+  .notice-box{background:#fff7ed;border-radius:10px;padding:12px;display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+  .notice-icon{font-size:18px;flex-shrink:0}
+  .notice-text{font-size:12px;color:#c2410c;line-height:1.5}
+  .section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .section-h{font-size:15px;font-weight:700}
+  .ubah-btn{font-size:13px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit}
+  .pax-card{background:#f9fafb;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between}
+  .pax-sub{font-size:12px;color:#9ca3af;margin-top:2px}
+  .edit-icon{font-size:18px;cursor:pointer}
+
+  /* PAGE 4 — PILIH KURSI */
+  .seat-info-bar{background:#eff6ff;padding:10px 16px;font-size:12px;color:#1d4ed8;font-weight:500}
+  .seat-legend{display:flex;gap:16px;padding:12px 16px;background:#fff;border-bottom:1px solid #eee;justify-content:center}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#555}
+  .legend-box{width:20px;height:20px;border-radius:5px}
+  .lb-tersedia{border:2px solid #9ca3af;background:#fff}
+  .lb-dipilih{background:#2563eb}
+  .lb-terisi{background:#d1d5db}
+  .gerbong-tabs{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;background:#fff}
+  .gerbong-tab{padding:8px 16px;border-radius:20px;font-size:13px;border:1.5px solid #e5e7eb;cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0;background:#fff;font-family:inherit}
+  .gerbong-tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+  .seat-grid-wrap{padding:16px;background:#f5f6fa;overflow-x:auto}
+  .seat-grid{display:grid;grid-template-columns:24px 44px 44px 20px 44px 44px;gap:6px;align-items:center;min-width:260px;margin:0 auto;width:fit-content}
+  .col-label{text-align:center;font-size:12px;font-weight:700;color:#6b7280}
+  .row-label{font-size:12px;font-weight:600;color:#6b7280;text-align:center}
+  .seat{width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .15s}
+  .seat.terisi{background:#d1d5db;border-color:#d1d5db;cursor:default;color:#9ca3af}
+  .seat.dipilih{background:#2563eb;border-color:#2563eb;color:#fff}
+  .seat.tersedia:hover{border-color:#2563eb;background:#eff6ff}
+  .seat-spacer{width:20px}
+  .simpan-btn{width:100%;padding:16px;background:#2563eb;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.3px}
+
+  /* PAGE 5 — PERLINDUNGAN */
+  .protect-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .protect-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .protect-logo{width:44px;height:44px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0}
+  .protect-logo img{width:100%;height:100%;object-fit:cover}
+  .protect-title{font-size:14px;font-weight:700}
+  .protect-by{font-size:11px;color:#9ca3af}
+  .protect-toggle{margin-left:auto}
+  .benefit-box{background:#f9fafb;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+  .benefit-item{font-size:12px;color:#374151;display:flex;align-items:center;gap:6px}
+  .benefit-item::before{content:'✓';color:#22c55e;font-weight:700}
+  .lihat-semua{font-size:12px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer;margin-top:4px;font-family:inherit}
+  .price-tag{font-size:13px;color:#6b7280;margin-top:8px}
+  .price-tag strong{color:#111}
+  .total-footer{position:sticky;bottom:0;background:#fff;border-top:1px solid #eee;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  .total-label{font-size:12px;color:#9ca3af;display:flex;align-items:center;gap:4px}
+  .total-amount{font-size:18px;font-weight:700;color:#111}
+
+  /* PAGE 6 — REVIEW */
+  .review-section{margin-bottom:12px}
+  .kereta-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .kereta-route{font-size:15px;font-weight:700;margin:6px 0;display:flex;align-items:center;gap:8px}
+  .kereta-time{font-size:13px;color:#6b7280;margin-bottom:4px}
+  .kereta-name-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .expand-btn{background:none;border:none;font-size:18px;cursor:pointer;color:#374151}
+  .harga-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .harga-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:14px}
+  .harga-row:last-of-type{border-bottom:none}
+  .harga-total{display:flex;justify-content:space-between;padding:10px 0 0;font-size:15px;font-weight:700}
+  .syarat-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0}
+  .checkbox{width:20px;height:20px;border:2px solid #d1d5db;border-radius:4px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+  .checkbox.checked{background:#2563eb;border-color:#2563eb;color:#fff}
+  .syarat-text{font-size:13px;color:#374151;line-height:1.5}
+  .syarat-link{color:#2563eb;font-weight:600}
+  .btn-row{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+  .btn-outline{width:100%;padding:14px;background:#fff;color:#2563eb;border:2px solid #2563eb;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+  /* DETAIL KERETA MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:flex-end;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:400px;padding:0 0 24px;max-height:80vh;overflow-y:auto}
+  .modal-handle{width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:12px auto}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 16px}
+  .modal-title{font-size:16px;font-weight:700}
+  .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#374151}
+  .modal-body{padding:0 16px}
+
+  /* BACK BTN non-gradient */
+  .back-plain{background:none;border:none;font-size:20px;cursor:pointer;color:#374151;padding:4px 8px 4px 0}
+  .plain-header{display:flex;align-items:center;padding:14px 16px;background:#fff;border-bottom:1px solid #eee}
+  .plain-header h1{font-size:17px;font-weight:700;flex:1;text-align:center}
+
+  @media(min-width:600px){
+    body{padding:40px 20px}
+    .phone-wrap{max-width:420px}
+    .screen{border-radius:32px;min-height:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  }
+</style>
+</head>
+<body>
+<div class="phone-wrap">
+
+<!-- ============ PAGE 1: FORM PENCARIAN ============ -->
+<div class="screen active" id="p1">
+  <div class="header-grad">
+    <div class="header-row">
+      <button class="back">←</button>
+      <h1>Antar Kota</h1>
+    </div>
+  </div>
+  <div class="body" style="padding:16px">
+    <div class="card">
+      <div class="field-group">
+        <div class="field">
+          <div class="field-icon">🚉</div>
+          <div style="flex:1">
+            <div class="field-label">Keberangkatan</div>
+            <div class="field-value">Purwokerto</div>
+          </div>
+          <div class="swap-btn" onclick="swapStations()">⇅</div>
+        </div>
+        <div class="field">
+          <div class="field-icon">🚉</div>
+          <div style="flex:1">
+            <div class="field-label">Tujuan</div>
+            <div class="field-value" id="tujuan-val">Jakarta Pasar Senen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="field">
+        <div class="field-icon">📅</div>
+        <div style="flex:1">
+          <div class="field-label">Tanggal Berangkat</div>
+          <div class="field-value">Jum, 03 Apr 2026</div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">Pulang Pergi</span>
+          <div class="toggle" id="pp-toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="field" style="border:none">
+        <div class="field-icon">🪑</div>
+        <div>
+          <div class="field-label">Pilih Penumpang</div>
+          <div class="field-value">01 Dewasa, 00 Bayi</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goTo('p2')">Cari Jadwal</button>
+    <div class="banner-ad" style="margin-top:12px">
+      <div class="ad-tag">Iklan</div>
+      <div class="ad-icon">🎒</div>
+      <div>
+        <h4>Access to Our Exclusive Benefits</h4>
+        <p>Nikmati berbagai keuntungan dengan bergabung dalam program loyalty di Access by KAI.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE 2: DAFTAR KERETA ============ -->
+<div class="screen" id="p2">
+  <div style="background:#fff">
+    <div class="plain-header">
+      <button class="back-plain" onclick="goTo('p1')">←</button>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:14px;font-weight:700">PURWOKERTO → PASAR SENEN (PSE)</div>
+        <div style="font-size:12px;color:#888">01 Dewasa 00 Bayi</div>
+      </div>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer">✏️</button>
+    </div>
+    <div class="date-tabs">
+      <div class="date-tab">Sen, 06 Apr</div>
+      <div class="date-tab active">Sel, 07 Apr</div>
+      <div class="date-tab">Rab, 08 Apr</div>
+      <div class="date-tab">Kam, 09 Apr</div>
+    </div>
+    <div class="class-tabs">
+      <div class="class-tab active">Semua</div>
+      <div class="class-tab">Eksekutif</div>
+      <div class="class-tab">Bisnis</div>
+      <div class="class-tab">Ekonomi</div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;background:#f5f6fa">
+    <div class="section-title">Kereta Keberangkatan</div>
+    <!-- Train Card 1 -->
+    <div class="train-card">
+      <div class="train-top">
+        <span class="kelas-badge kelas-ekonomi">Ekonomi</span>
+        <span class="avail-badge avail-sisa">Sisa 13 Kursi</span>
+      </div>
+      <div class="train-name">SINGASARI (149)</div>
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div class="train-time" style="flex:1;flex-direction:column;gap:0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="time-dot empty"></div>
+            <div><span class="time-val">00:16</span> <span class="time-station">Purwokerto (PWT)</span></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="width:8px;display:flex;justify-content:center"><div class="time-line"></div></div>
+            <span class="duration">05j 17m</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="time-dot filled"></div>
+            <div><span class="time-val">05:33</span> <span class="time-station">Pasarsenen (PSE)</span></div>
+          </div>
+        </div>
+        <div class="price-col">
+          <div class="price-label">Harga Mulai Dari :</div>
+          <div class="price-val">Rp330.000</div>
+          <div class="price-unit">/ Pax</div>
+        </div>
+      </div>
+      <div class="train-footer">
+        <button class="subkelas-btn">Lihat Subkelas ▾</button>
+        <button class="detail-btn" onclick="showModal()">Detail Kereta</button>
+      </div>
+    </div>
+    <!-- Train Card 2 -->
+    <div class="train-card">
+      <div class="train-top">
+        <span class="kelas-badge kelas-eksekutif">Eksekutif</span>
+        <span class="avail-badge avail-ok">Tersedia</span>
+      </div>
+      <div class="train-name">SINGASARI (149)</div>
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div class="time-dot empty"></div>
+            <span class="time-val">00:16</span> <span class="time-station">Purwokerto (PWT)</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:4px"><div style="width:8px;display:flex;justify-content:center"><div class="time-line"></div></div><span class="duration">05j 17m</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="time-dot filled"></div>
+            <span class="time-val">05:33</span> <span class="time-station">Pasarsenen (PSE)</span>
+          </div>
+        </div>
+        <div class="price-col">
+          <div class="price-label">Harga Mulai Dari :</div>
+          <div class="price-val">Rp515.000</div>
+          <div class="price-unit">/ Pax</div>
+        </div>
+      </div>
+      <div class="train-footer">
+        <button class="subkelas-btn">Lihat Subkelas ▾</button>
+        <button class="detail-btn" onclick="showModal()">Detail Kereta</button>
+      </div>
+    </div>
+    <!-- Train Card 3 -->
+    <div class="train-card">
+      <div class="train-top">
+        <span class="kelas-badge kelas-eksekutif">Eksekutif</span>
+        <span class="avail-badge avail-ok">Tersedia</span>
+      </div>
+      <div class="train-name">GAYA BARU MALAM SELATAN (90)</div>
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div class="time-dot empty"></div>
+            <span class="time-val">16:24</span> <span class="time-station">Purwokerto (PWT)</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:4px"><div style="width:8px;display:flex;justify-content:center"><div class="time-line"></div></div><span class="duration">07j 11m</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="time-dot filled"></div>
+            <span class="time-val">23:35</span> <span class="time-station">Pasarsenen (PSE)</span>
+          </div>
+        </div>
+        <div class="price-col">
+          <div class="price-label">Harga Mulai Dari :</div>
+          <div class="price-val">Rp600.000</div>
+          <div class="price-unit">/ Pax</div>
+        </div>
+      </div>
+      <div class="train-footer">
+        <button class="subkelas-btn">Lihat Subkelas ▾</button>
+        <button class="detail-btn" onclick="goTo('p3_seat_confirm')">Detail Kereta</button>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <div class="jadwal-habis">Tampilkan jadwal yang telah habis <div class="toggle"></div></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="sort-btn">↕ Urutkan</button>
+    <button class="filter-btn">≡ Filter</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 3: KONFIRMASI KURSI (sebelum pilih) ============ -->
+<div class="screen" id="p3_seat_confirm">
+  <div class="header-grad">
+    <div class="header-row">
+      <button class="back" onclick="goTo('p2')">←</button>
+      <h1>Pesan Tiket</h1>
+      <div class="timer-badge" id="timer1">00:07:00</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><span style="color:rgba(255,255,255,.5)">Data Pe...</span></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num">2</div><span>Kursi</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-num">3</div><span style="color:rgba(255,255,255,.5)">Perlindu...</span></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:4px">Jum, 03 Apr 2026 &nbsp;•&nbsp; 16:24 – 23:35</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">PURWOKERTO → JAKARTA PASAR SENEN</div>
+      <div style="font-size:12px;color:#9ca3af">GAYA BARU MALAM SELATAN (90) &nbsp;•&nbsp; EKSEKUTIF</div>
+      <div style="margin-top:12px;border-top:1px solid #f3f4f6;padding-top:12px">
+        <div style="background:#f9fafb;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:12px;color:#9ca3af">Penumpang 1 (Dewasa)</div>
+            <div style="font-size:15px;font-weight:700;margin-top:2px">TRI ROMADANI</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px">Eksekutif 1 / Kursi 2C</div>
+          </div>
+          <button class="detail-btn" onclick="goTo('p4')">Pilih Kursi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px;background:#f5f6fa;border-top:1px solid #eee">
+    <button class="btn-primary" onclick="goTo('p5')">LANJUTKAN</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 4: PILIH KURSI ============ -->
+<div class="screen" id="p4">
+  <div class="plain-header">
+    <button class="back-plain" onclick="goTo('p3_seat_confirm')">←</button>
+    <div style="flex:1;text-align:center">
+      <div style="font-size:15px;font-weight:700">Pilih Kursi</div>
+      <div style="font-size:11px;color:#888">PURWOKERTO – SURABAYA GU... • 1 Dewasa</div>
+    </div>
+  </div>
+  <div class="seat-info-bar">GAYA BARU MALAM SELATAN &nbsp;•&nbsp; Eksekutif (AC) &nbsp;•&nbsp; Jum, 3 Apr 2026</div>
+  <div style="background:#fff;padding:12px 16px;border-bottom:1px solid #eee">
+    <div style="background:#eff6ff;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0">TR</div>
+      <div>
+        <div style="font-size:13px;font-weight:700">TRI ROMADANI</div>
+        <div style="font-size:12px;color:#6b7280">Eksekutif 1 / Kursi 2C</div>
+      </div>
+    </div>
+  </div>
+  <div class="seat-legend">
+    <div class="legend-item"><div class="legend-box lb-tersedia"></div>Tersedia</div>
+    <div class="legend-item"><div class="legend-box lb-dipilih"></div>Dipilih</div>
+    <div class="legend-item"><div class="legend-box lb-terisi"></div>Terisi</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;background:#f5f6fa">
+    <div class="seat-grid-wrap">
+      <div class="seat-grid" id="seat-grid">
+        <!-- headers -->
+        <div></div>
+        <div class="col-label">A</div>
+        <div class="col-label">B</div>
+        <div class="seat-spacer"></div>
+        <div class="col-label">C</div>
+        <div class="col-label">D</div>
+      </div>
+    </div>
+  </div>
+  <div class="gerbong-tabs">
+    <button class="gerbong-tab active">Eksekutif 1</button>
+    <button class="gerbong-tab">Eksekutif 2</button>
+    <button class="gerbong-tab">Eksekutif 3</button>
+  </div>
+  <div style="padding:16px;background:#fff;border-top:1px solid #eee">
+    <button class="simpan-btn" onclick="goTo('p3_seat_confirm')">SIMPAN</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 5: PERLINDUNGAN EKSTRA ============ -->
+<div class="screen" id="p5">
+  <div class="header-grad">
+    <div class="header-row">
+      <button class="back" onclick="goTo('p3_seat_confirm')">←</button>
+      <h1>Pesan Tiket</h1>
+      <div class="timer-badge">00:05:49</div>
+    </div>
+    <div class="steps">
+      <div class="step done"><div class="step-num">✓</div><span>Kursi</span></div>
+      <div class="step-line"></div>
+      <div class="step active"><div class="step-num">3</div><span>Perlindungan Ekstra</span></div>
+    </div>
+  </div>
+  <div class="body" style="padding-bottom:80px">
+    <p style="font-size:14px;font-weight:700;margin-bottom:12px">Perlindungan Ekstra</p>
+    <div class="protect-card">
+      <div class="protect-header">
+        <div class="protect-logo">🔴</div>
+        <div>
+          <div class="protect-title">Perlindungan Kecelakaan Diri</div>
+          <div class="protect-by">powered by PT Sompo Insurance In...</div>
+        </div>
+        <div class="protect-toggle"><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="benefit-box">
+        <div class="benefit-item">Kompensasi kecelakaan perjalanan hingga Rp10.000.000</div>
+        <button class="lihat-semua">Lihat Semua</button>
+      </div>
+      <div class="price-tag">Harga Mulai Dari : <strong>Rp4.500</strong>/Penumpang</div>
+    </div>
+    <p style="font-size:14px;font-weight:700;margin-bottom:12px">Perlindungan Perjalanan</p>
+    <div class="protect-card">
+      <div class="protect-header">
+        <div class="protect-logo" style="font-size:14px;font-weight:700;color:#c2410c">MNC</div>
+        <div>
+          <div class="protect-title">Jaminan Refund 100%</div>
+          <div class="protect-by">powered by PT Mitra Jasa Pratama</div>
+        </div>
+        <div class="protect-toggle"><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="benefit-box">
+        <div class="benefit-item">Kompensasi Pembatalan perjalanan 100%</div>
+        <button class="lihat-semua">Lihat Semua Manfaat</button>
+      </div>
+      <div class="price-tag">Harga Mulai Dari : <strong>Rp24.000</strong>/Penumpang</div>
+    </div>
+  </div>
+  <div class="total-footer">
+    <div>
+      <div class="total-label">Total Harga ▾</div>
+      <div class="total-amount">Rp 600.000</div>
+    </div>
+    <button class="btn-primary" style="width:auto;padding:14px 28px" onclick="goTo('p6')">LANJUTKAN</button>
+  </div>
+</div>
+
+<!-- ============ PAGE 6: REVIEW & BAYAR ============ -->
+<div class="screen" id="p6">
+  <div class="header-grad">
+    <div class="header-row">
+      <button class="back" onclick="goTo('p5')">←</button>
+      <h1>Pesan Tiket</h1>
+    </div>
+    <div class="steps">
+      <div class="step done"><div class="step-num">✓</div><span>Review</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-num">7</div><span>Pembayaran</span></div>
+    </div>
+  </div>
+  <div class="body" style="padding-bottom:20px">
+    <div class="review-section">
+      <p style="font-size:14px;font-weight:700;margin-bottom:10px">Kereta Pergi</p>
+      <div class="kereta-card">
+        <div class="kereta-time">03 April 2026 &nbsp;•&nbsp; 16:24 – 23:35</div>
+        <div class="kereta-route">PURWOKERTO <span>→</span> JAKARTA PASAR SENEN</div>
+        <div class="kereta-name-row">
+          <span style="font-size:12px;color:#9ca3af">GAYA BARU MALAM SELATAN (90) • EKSEKUTIF</span>
+          <button class="expand-btn">▾</button>
+        </div>
+      </div>
+    </div>
+    <div class="review-section">
+      <p style="font-size:14px;font-weight:700;margin-bottom:10px">Rincian Harga</p>
+      <div class="harga-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700">GAYA BARU MALAM SELAT... (90)</span>
+          <span class="kelas-badge kelas-eksekutif">Eksekutif</span>
+        </div>
+        <div class="harga-row"><span>Dewasa</span><span style="display:flex;align-items:center;gap:8px"><span style="color:#9ca3af;font-size:12px">x1</span> Rp600.000</span></div>
+        <div class="harga-row"><span style="display:flex;align-items:center;gap:6px">Biaya Jasa Aplikasi <span style="width:16px;height:16px;background:#2563eb;border-radius:50%;color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center">i</span></span><span>Rp0</span></div>
+        <div class="harga-total"><span>Total Tagihan</span><span>Rp600.000</span></div>
+      </div>
+    </div>
+    <div class="harga-card" style="margin-bottom:12px">
+      <div class="syarat-row">
+        <div class="checkbox" id="cbx" onclick="toggleCbx()"></div>
+        <div class="syarat-text">Saya telah membaca dan setuju terhadap <span class="syarat-link">Syarat dan ketentuan pembelian tiket</span></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="goTo('p7')">BAYAR</button>
+      <button class="btn-outline">TAMBAHKAN KE KERANJANG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE 7: SUKSES ============ -->
+<div class="screen" id="p7">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:#fff">
+    <div style="width:80px;height:80px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:20px">✅</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">Pemesanan Berhasil!</h2>
+    <p style="font-size:14px;color:#6b7280;margin-bottom:8px">Tiket Anda telah dipesan.</p>
+    <p style="font-size:14px;color:#6b7280;margin-bottom:24px"><strong>PURWOKERTO → JAKARTA PASAR SENEN</strong><br>Jum, 03 Apr 2026 | 16:24 – 23:35</p>
+    <div style="background:#f9fafb;border-radius:14px;padding:16px;width:100%;margin-bottom:24px">
+      <div style="font-size:13px;color:#9ca3af;margin-bottom:4px">Kode Booking</div>
+      <div style="font-size:22px;font-weight:700;letter-spacing:4px;color:#111">XK8291</div>
+    </div>
+    <button class="btn-primary" onclick="goTo('p1')">Kembali ke Beranda</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: DETAIL KERETA ============ -->
+<div class="modal-overlay" id="detail-modal" onclick="hideModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Detail Kereta</span>
+      <button class="modal-close" onclick="hideModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:14px;font-weight:700">GAYA BARU MALAM SELATAN (90)</span>
+          <span class="kelas-badge kelas-eksekutif">Eksekutif</span>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:18px">🚉</div>
+            <div style="width:1px;height:40px;background:#d1d5db"></div>
+            <div style="font-size:18px">📍</div>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:space-between;flex:1">
+            <div>
+              <div style="font-size:15px;font-weight:700">PURWOKERTO (PWT)</div>
+              <div style="font-size:13px;color:#9ca3af">16:24 &nbsp;•&nbsp; 03 Apr 2026</div>
+            </div>
+            <div style="font-size:12px;color:#9ca3af;text-align:center">18 Stasiun &nbsp;<button style="background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer">Berhenti ▾</button></div>
+            <div>
+              <div style="font-size:15px;font-weight:700">SURABAYA GUBENG (SGU)</div>
+              <div style="font-size:13px;color:#9ca3af">23:35 &nbsp;•&nbsp; 03 Apr 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:14px;font-weight:700;margin-bottom:8px">Detil Subkelas</p>
+      <div style="background:#fff;border:1px solid #f3f4f6;border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <span style="font-size:14px;font-weight:500">Eksekutif (AC)</span>
+        <div style="text-align:right">
+          <div style="font-size:13px;color:#e11d48;font-weight:600">Sisa 15 Kursi</div>
+          <div style="font-size:15px;font-weight:700">Rp600.000<span style="font-size:12px;color:#9ca3af">/Pax</span></div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="hideModal();goTo('p3_seat_confirm')">Pilih Kereta Ini</button>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');el.scrollTop=0;window.scrollTo(0,0);}
+}
+function swapStations(){
+  const v=document.getElementById('tujuan-val');
+  v.textContent=v.textContent==='Jakarta Pasar Senen'?'Purwokerto':'Jakarta Pasar Senen';
+}
+function showModal(){document.getElementById('detail-modal').classList.add('show')}
+function hideModal(e){
+  if(!e||e.target===document.getElementById('detail-modal'))
+    document.getElementById('detail-modal').classList.remove('show');
+}
+function toggleCbx(){
+  const c=document.getElementById('cbx');
+  c.classList.toggle('checked');
+  c.textContent=c.classList.contains('checked')?'✓':'';
+}
+
+// Build seat grid
+const grid=document.getElementById('seat-grid');
+const terisiSeats=['1A','1B','1C','2C','3A','4B','4C','4D'];
+for(let row=1;row<=10;row++){
+  const rl=document.createElement('div');rl.className='row-label';rl.textContent=row;grid.appendChild(rl);
+  ['A','B',null,'C','D'].forEach(col=>{
+    if(col===null){const sp=document.createElement('div');sp.className='seat-spacer';grid.appendChild(sp);return;}
+    const key=row+col;
+    const seat=document.createElement('div');
+    seat.className='seat '+(terisiSeats.includes(key)?'terisi':'tersedia');
+    if(key==='2C'){seat.className='seat dipilih';seat.textContent='TR';}
+    seat.dataset.seat=key;
+    seat.addEventListener('click',function(){
+      if(this.classList.contains('terisi'))return;
+      document.querySelectorAll('.seat.dipilih').forEach(s=>{s.classList.remove('dipilih');s.classList.add('tersedia');s.textContent='';});
+      this.classList.remove('tersedia');this.classList.add('dipilih');this.textContent='TR';
+    });
+    grid.appendChild(seat);
+  });
+}
+
+// Timer
+let secs=420;
+function updateTimer(){
+  const m=String(Math.floor(secs/60)).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.querySelectorAll('.timer-badge').forEach(t=>t.textContent='00:'+m+':'+s);
+  if(secs>0)secs--;
+}
+setInterval(updateTimer,1000);
+</script>
+</body>
+</html>
